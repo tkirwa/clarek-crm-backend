@@ -1,54 +1,55 @@
-const User = require('../models/User');
-const AfricasTalking = require('africastalking');
+// controllers/authController.js
+const User = require('../models/user');
 
-// const africastalking = require('africastalking')(process.env.AFRICASTALKING_API_KEY);
-
-const africastalking = AfricasTalking({
-    apiKey: 'process.env.AFRICASTALKING_API_KEY', 
-    username: 'process.env.AFRICASTALKING_USERNAME'
-  });
-
-const sendVerificationCode = async (phone, code) => {
-  const sms = africastalking.SMS;
-
-  const options = {
-    to: [`+254725226888`],
-    message: `Your verification code is: ${code}`,
-  };
-
-  try {
-    const response = await sms.send(options);
-    console.log(response);
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const registerUser = async (req, res) => {
+exports.registerUser = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
-    // Generate a random verification code (you might want to use a more secure method)
-    const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+    // Check if the phone number is already registered
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Phone number already registered' });
+    }
 
+    // Create a new user
     const newUser = new User({
       phone,
-      verificationCode,
       password,
     });
 
+    // Save the user to the database
     await newUser.save();
 
-    // Send verification code via Africa's Talking
-    await sendVerificationCode(phone, verificationCode);
-
-    res.status(201).json({ message: 'User registered successfully. Verification code sent to your phone.' });
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-module.exports = {
-  registerUser,
+exports.loginUser = async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    // Check if the user exists
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid phone number or password' });
+    }
+
+    // Verify the password
+    const isPasswordValid = await user.verifyPassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid phone number or password' });
+    }
+
+    // Generate JWT token
+    const token = user.generateToken();
+
+    res.status(200).json({ message: 'Login successful', token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
+
