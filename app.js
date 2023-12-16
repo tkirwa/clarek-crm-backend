@@ -39,30 +39,30 @@ mongoose.connect(process.env.MONGO_URI, {
 
 
 // Redis connection
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URI,
-  retry_strategy: (options) => {
-    if (options.error && options.error.code === 'ECONNREFUSED') {
-      return new Error('The server refused the connection');
-    }
-    if (options.total_retry_time > 1000 * 60 * 60) {
-      return new Error('Retry time exhausted');
-    }
-    if (options.attempt > 10) {
-      return undefined;
-    }
-    return Math.min(options.attempt * 100, 3000);
-  },
-});
+// const redisClient = redis.createClient({
+//   url: process.env.REDIS_URI,
+//   retry_strategy: (options) => {
+//     if (options.error && options.error.code === 'ECONNREFUSED') {
+//       return new Error('The server refused the connection');
+//     }
+//     if (options.total_retry_time > 1000 * 60 * 60) {
+//       return new Error('Retry time exhausted');
+//     }
+//     if (options.attempt > 10) {
+//       return undefined;
+//     }
+//     return Math.min(options.attempt * 100, 3000);
+//   },
+// });
 
-// Event listeners for Redis client
-redisClient.on('connect', () => {
-  console.log('Connected to Redis');
-});
+// // Event listeners for Redis client
+// redisClient.on('connect', () => {
+//   console.log('Connected to Redis');
+// });
 
-redisClient.on('error', (err) => {
-  console.error(`Error connecting to Redis: ${err}`);
-});
+// redisClient.on('error', (err) => {
+//   console.error(`Error connecting to Redis: ${err}`);
+// });
 
 app.use(logger('dev'));
 app.use(express.json());

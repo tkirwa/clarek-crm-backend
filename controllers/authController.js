@@ -26,19 +26,15 @@ const sendVerificationCode = async (phone, code) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { email, phone, firstName, lastName, dateOfBirth, gender } = req.body;
+    const { phone, password } = req.body;
 
     // Generate a random verification code (you might want to use a more secure method)
     const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
 
     const newUser = new User({
-      email,
       phone,
-      firstName,
-      lastName,
-      dateOfBirth,
-      gender,
       verificationCode,
+      password,
     });
 
     await newUser.save();
